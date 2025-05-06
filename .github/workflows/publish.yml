@@ -22,8 +22,25 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Check if tests exist before running them
+      - name: Check for tests
+        id: check_tests
+        run: |
+          if grep -q '"test":' package.json && [ -d "tests" ] || [ -d "__tests__" ] || find . -name "*.test.*" -o -name "*.spec.*" | grep -q .; then
+            echo "HAS_TESTS=true" >> $GITHUB_OUTPUT
+          else
+            echo "HAS_TESTS=false" >> $GITHUB_OUTPUT
+          fi
+
+      # Only run tests if they exist
       - name: Run tests
+        if: steps.check_tests.outputs.HAS_TESTS == 'true'
         run: npm test
+
+      # If tests don't exist, just log a message
+      - name: Skip tests
+        if: steps.check_tests.outputs.HAS_TESTS == 'false'
+        run: echo "No tests found, skipping test step"
 
       - name: Build package
         run: npm run build
