@@ -50,9 +50,20 @@ jobs:
         id: extract_version
         run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
 
-      # Update package.json version to match tag
-      - name: Update package version
-        run: npm version ${{ steps.extract_version.outputs.VERSION }} --no-git-tag-version
+      # Check current version in package.json and update only if different
+      - name: Check and update package version
+        run: |
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          NEW_VERSION=${{ steps.extract_version.outputs.VERSION }}
+          echo "Current version: $CURRENT_VERSION"
+          echo "Tag version: $NEW_VERSION"
+          
+          if [ "$CURRENT_VERSION" != "$NEW_VERSION" ]; then
+            echo "Updating version from $CURRENT_VERSION to $NEW_VERSION"
+            npm version $NEW_VERSION --no-git-tag-version
+          else
+            echo "Version is already $CURRENT_VERSION, no update needed"
+          fi
 
       # Publish to NPM Registry
       - name: Publish to NPM
