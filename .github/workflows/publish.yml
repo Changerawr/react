@@ -1,0 +1,86 @@
+name: Publish Package
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build package
+        run: npm run build
+
+      # Extract version from tag (remove 'v' prefix)
+      - name: Extract version
+        id: extract_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      # Update package.json version to match tag
+      - name: Update package version
+        run: npm version ${{ steps.extract_version.outputs.VERSION }} --no-git-tag-version
+
+      # Publish to NPM Registry
+      - name: Publish to NPM
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # Set up for GitHub Packages
+      - name: Setup Node.js for GitHub Packages
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@changerawr'
+
+      # Update package.json to use GitHub repo name format
+      - name: Configure package for GitHub Packages
+        run: |
+          sed -i 's/"name": "@changerawr\/react"/"name": "@changerawr\/react"/g' package.json
+
+      # Publish to GitHub Packages
+      - name: Publish to GitHub Packages
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Create GitHub Release
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Release ${{ steps.extract_version.outputs.VERSION }}
+          body: |
+            # Changerawr React SDK ${{ steps.extract_version.outputs.VERSION }}
+            
+            ## Changes
+            Please check the [CHANGELOG.md](https://github.com/changerawr/react/blob/main/CHANGELOG.md) for details.
+            
+            ## Installation
+            ```
+            npm install @changerawr/react
+            ```
+            
+            ## Documentation
+            See the [documentation](https://github.com/changerawr/react#readme) for usage information.
+          draft: false
+          prerelease: ${{ contains(github.ref, '-alpha') || contains(github.ref, '-beta') || contains(github.ref, '-rc') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
