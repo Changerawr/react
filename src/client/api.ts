@@ -1,27 +1,21 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import {
     ChangerawrClientConfig,
-    Project,
-    ProjectParams,
-    PaginationParams,
     CursorPaginationParams,
-    PaginatedResponse,
     CursorPaginatedResponse,
+    PaginationParams,
+    PaginatedResponse,
     ChangelogEntry,
-    ChangelogEntryParams,
     Tag,
-    Subscriber,
     SubscribeParams,
-    EmailConfig,
-    EmailConfigParams,
-    SendEmailParams,
     WidgetScriptParams,
 } from './types';
 import { parseApiError } from './errors';
 
 /**
- * Changerawr API client
- * Provides methods for interacting with the Changerawr API
+ * Changerawr API client for consuming changelog data
+ * Provides methods for reading changelogs, subscribing, and embedding widgets
+ * This is a "build it yourself" SDK - focused on display/consumption, not admin features
  */
 export class ChangerawrClient {
     private readonly axios: AxiosInstance;
@@ -70,105 +64,11 @@ export class ChangerawrClient {
     }
 
     // =========================================================================
-    // Projects
+    // Changelog Entries - Read Only
     // =========================================================================
 
     /**
-     * Get all projects
-     * @param params Optional pagination parameters
-     * @returns Promise with paginated project list
-     */
-    async getProjects(params?: PaginationParams): Promise<PaginatedResponse<Project>> {
-        return this.request<PaginatedResponse<Project>>({
-            method: 'GET',
-            url: '/projects',
-            params,
-        });
-    }
-
-    /**
-     * Get a project by ID
-     * @param projectId Project ID
-     * @returns Promise with project data
-     */
-    async getProject(projectId: string): Promise<Project> {
-        return this.request<Project>({
-            method: 'GET',
-            url: `/projects/${projectId}`,
-        });
-    }
-
-    /**
-     * Create a new project
-     * @param params Project creation parameters
-     * @returns Promise with the created project
-     */
-    async createProject(params: ProjectParams): Promise<Project> {
-        return this.request<Project>({
-            method: 'POST',
-            url: '/projects',
-            data: params,
-        });
-    }
-
-    /**
-     * Update a project
-     * @param projectId Project ID
-     * @param params Project update parameters
-     * @returns Promise with the updated project
-     */
-    async updateProject(projectId: string, params: ProjectParams): Promise<Project> {
-        return this.request<Project>({
-            method: 'PATCH',
-            url: `/projects/${projectId}`,
-            data: params,
-        });
-    }
-
-    /**
-     * Delete a project
-     * @param projectId Project ID
-     * @returns Promise with success status
-     */
-    async deleteProject(projectId: string): Promise<void> {
-        return this.request<void>({
-            method: 'DELETE',
-            url: `/projects/${projectId}`,
-        });
-    }
-
-    /**
-     * Get project settings
-     * @param projectId Project ID
-     * @returns Promise with project settings
-     */
-    async getProjectSettings(projectId: string): Promise<Project> {
-        return this.request<Project>({
-            method: 'GET',
-            url: `/projects/${projectId}/settings`,
-        });
-    }
-
-    /**
-     * Update project settings
-     * @param projectId Project ID
-     * @param params Project settings parameters
-     * @returns Promise with updated project settings
-     */
-    async updateProjectSettings(projectId: string, params: ProjectParams): Promise<Project> {
-        return this.request<Project>({
-            method: 'PATCH',
-            url: `/projects/${projectId}/settings`,
-            data: params,
-        });
-    }
-
-    // =========================================================================
-    // Changelog Entries
-    // =========================================================================
-
-    /**
-     * Get changelog entries
+     * Get changelog entries with pagination, search, and filtering
      * @param projectId Project ID
      * @param params Optional pagination and filtering parameters
      * @returns Promise with paginated changelog entries
@@ -181,7 +81,7 @@ export class ChangerawrClient {
             sort?: 'newest' | 'oldest';
         }
     ): Promise<CursorPaginatedResponse<ChangelogEntry>> {
-        // Convert tags array to string
+        // Convert tags array to comma-separated string
         const queryParams = {
             ...params,
             tags: params?.tags?.join(','),
@@ -195,7 +95,7 @@ export class ChangerawrClient {
     }
 
     /**
-     * Get changelog entry by ID
+     * Get a single changelog entry by ID
      * @param projectId Project ID
      * @param entryId Entry ID
      * @returns Promise with changelog entry
@@ -204,80 +104,6 @@ export class ChangerawrClient {
         return this.request<ChangelogEntry>({
             method: 'GET',
             url: `/projects/${projectId}/changelog/${entryId}`,
-        });
-    }
-
-    /**
-     * Create a new changelog entry
-     * @param projectId Project ID
-     * @param params Entry creation parameters
-     * @returns Promise with the created entry
-     */
-    async createChangelogEntry(projectId: string, params: ChangelogEntryParams): Promise<ChangelogEntry> {
-        return this.request<ChangelogEntry>({
-            method: 'POST',
-            url: `/projects/${projectId}/changelog`,
-            data: params,
-        });
-    }
-
-    /**
-     * Update a changelog entry
-     * @param projectId Project ID
-     * @param entryId Entry ID
-     * @param params Entry update parameters
-     * @returns Promise with the updated entry
-     */
-    async updateChangelogEntry(
-        projectId: string,
-        entryId: string,
-        params: ChangelogEntryParams
-    ): Promise<ChangelogEntry> {
-        return this.request<ChangelogEntry>({
-            method: 'PUT',
-            url: `/projects/${projectId}/changelog/${entryId}`,
-            data: params,
-        });
-    }
-
-    /**
-     * Delete a changelog entry
-     * @param projectId Project ID
-     * @param entryId Entry ID
-     * @returns Promise with success status
-     */
-    async deleteChangelogEntry(projectId: string, entryId: string): Promise<void> {
-        return this.request<void>({
-            method: 'DELETE',
-            url: `/projects/${projectId}/changelog/${entryId}`,
-        });
-    }
-
-    /**
-     * Publish a changelog entry
-     * @param projectId Project ID
-     * @param entryId Entry ID
-     * @returns Promise with the published entry
-     */
-    async publishChangelogEntry(projectId: string, entryId: string): Promise<ChangelogEntry> {
-        return this.request<ChangelogEntry>({
-            method: 'PATCH',
-            url: `/projects/${projectId}/changelog/${entryId}`,
-            data: { action: 'publish' },
-        });
-    }
-
-    /**
-     * Unpublish a changelog entry
-     * @param projectId Project ID
-     * @param entryId Entry ID
-     * @returns Promise with the unpublished entry
-     */
-    async unpublishChangelogEntry(projectId: string, entryId: string): Promise<ChangelogEntry> {
-        return this.request<ChangelogEntry>({
-            method: 'PATCH',
-            url: `/projects/${projectId}/changelog/${entryId}`,
-            data: { action: 'unpublish' },
         });
     }
 
@@ -305,13 +131,13 @@ export class ChangerawrClient {
     }
 
     // =========================================================================
-    // Subscribers
+    // Subscriptions
     // =========================================================================
 
     /**
-     * Subscribe to a project
+     * Subscribe to changelog updates
      * @param projectId Project ID
-     * @param params Subscription parameters
+     * @param params Subscription parameters (email, name, preferences)
      * @returns Promise with success response
      */
     async subscribe(projectId: string, params: SubscribeParams): Promise<{ success: boolean, message: string }> {
@@ -326,29 +152,7 @@ export class ChangerawrClient {
     }
 
     /**
-     * Get subscribers for a project (admin only)
-     * @param projectId Project ID
-     * @param params Optional pagination and search parameters
-     * @returns Promise with paginated subscribers
-     */
-    async getSubscribers(
-        projectId: string,
-        params?: PaginationParams & {
-            search?: string;
-        }
-    ): Promise<PaginatedResponse<Subscriber>> {
-        return this.request<PaginatedResponse<Subscriber>>({
-            method: 'GET',
-            url: '/subscribers',
-            params: {
-                ...params,
-                projectId,
-            },
-        });
-    }
-
-    /**
-     * Unsubscribe a subscriber
+     * Unsubscribe from changelog updates
      * @param subscriberId Subscriber ID
      * @param projectId Optional project ID (if only unsubscribing from one project)
      * @returns Promise with success response
@@ -362,75 +166,11 @@ export class ChangerawrClient {
     }
 
     // =========================================================================
-    // Email
-    // =========================================================================
-
-    /**
-     * Get email configuration for a project
-     * @param projectId Project ID
-     * @returns Promise with email configuration
-     */
-    async getEmailConfig(projectId: string): Promise<EmailConfig> {
-        return this.request<EmailConfig>({
-            method: 'GET',
-            url: `/projects/${projectId}/integrations/email`,
-        });
-    }
-
-    /**
-     * Update email configuration for a project
-     * @param projectId Project ID
-     * @param params Email configuration parameters
-     * @returns Promise with updated email configuration
-     */
-    async updateEmailConfig(projectId: string, params: EmailConfigParams): Promise<EmailConfig> {
-        return this.request<EmailConfig>({
-            method: 'POST',
-            url: `/projects/${projectId}/integrations/email`,
-            data: params,
-        });
-    }
-
-    /**
-     * Test email configuration
-     * @param projectId Project ID
-     * @param testEmail Email address to send test to
-     * @returns Promise with test result
-     */
-    async testEmailConfig(
-        projectId: string,
-        testEmail: string
-    ): Promise<{ success: boolean, message: string }> {
-        return this.request<{ success: boolean, message: string }>({
-            method: 'POST',
-            url: `/projects/${projectId}/integrations/email/test`,
-            data: { testEmail },
-        });
-    }
-
-    /**
-     * Send email notification
-     * @param projectId Project ID
-     * @param params Email sending parameters
-     * @returns Promise with send result
-     */
-    async sendEmail(
-        projectId: string,
-        params: SendEmailParams
-    ): Promise<{ success: boolean, message: string, recipientCount: number }> {
-        return this.request<{ success: boolean, message: string, recipientCount: number }>({
-            method: 'POST',
-            url: `/projects/${projectId}/integrations/email/send`,
-            data: params,
-        });
-    }
-
-    // =========================================================================
     // Widget
     // =========================================================================
 
     /**
-     * Get widget script for embedding
+     * Get widget embed script for embedding changelog widget
      * @param projectId Project ID
      * @param params Widget configuration parameters
      * @returns Promise with widget script

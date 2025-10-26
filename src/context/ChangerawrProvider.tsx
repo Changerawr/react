@@ -63,8 +63,8 @@ export const ChangerawrProvider: React.FC<ChangerawrProviderProps> = ({
     const [projectId, setProjectId] = useState<string | undefined>(initialProjectId);
     // Error and loading states
     const [error, setError] = useState<ChangerawrError | null>(null);
-    // @ts-ignore
-    const [isLoading, setIsLoading] = useState<boolean>(false);
+    // Loading state (reserved for future use)
+    const [_isLoading] = useState<boolean>(false);
 
     // Create configuration object
     const config = useMemo<ChangerawrClientConfig>(
@@ -105,9 +105,9 @@ export const ChangerawrProvider: React.FC<ChangerawrProviderProps> = ({
             projectId,
             error,
             clearError,
-            isLoading,
+            isLoading: _isLoading,
         }),
-        [config, projectId, error, isLoading]
+        [config, projectId, error, _isLoading]
     );
 
     if (error) {

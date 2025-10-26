@@ -89,7 +89,7 @@ export function formatVersion(version: string | null | undefined): string {
     if (!version) return '';
 
     // Remove leading 'v' if present
-    let formatted = version.startsWith('v') ? version.substring(1) : version;
+    const formatted = version.startsWith('v') ? version.substring(1) : version;
 
     // Handle semver versions
     const semverRegex = /^(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/;

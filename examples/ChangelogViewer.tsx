@@ -251,6 +251,17 @@ function ChangelogEntryCard({ entry }: { entry: any }) {
                 style={{ marginBottom: '15px' }}
                 dangerouslySetInnerHTML={{ __html: entry.content }}
             />
+            {/*
+              For better markdown rendering, use @changerawr/markdown:
+
+              import { MarkdownRenderer } from '@changerawr/markdown/react';
+
+              <MarkdownRenderer
+                content={entry.content}
+                format="tailwind"
+                className="prose max-w-none"
+              />
+            */}
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div className="entry-tags" style={{ display: 'flex', gap: '6px' }}>

@@ -1,15 +1,22 @@
 # @changerawr/react
 
-A headless React SDK for interacting with Changerawr - the modern changelog management system.
+**Build-it-yourself React SDK for consuming Changerawr changelogs**
+
+A headless, lightweight React SDK focused on providing the tools you need to build custom changelog experiences. No pre-built UI components forcing a specific design—just flexible hooks and utilities to display your Changerawr data however you want.
+
+## Philosophy
+
+This SDK follows a **"build it yourself"** approach: we provide the building blocks (hooks, types, API client), and you create the UI that fits your needs. Perfect for developers who want complete control over their changelog presentation without the bloat of unnecessary admin features.
 
 ## Features
 
-- 🔄 Full TypeScript support
-- 🎣 React hooks for all Changerawr API endpoints
-- 🎮 Complete control over UI implementation
-- 🧩 Modular architecture - use only what you need
-- 🚀 Optimized for performance and bundle size
-- 📚 Comprehensive documentation
+- 🎨 **Headless & Flexible** - Build your own UI, your way
+- 🔄 **Full TypeScript Support** - Complete type safety and IntelliSense
+- 🎣 **Focused Hooks** - Only what you need: read changelogs, filter by tags, handle subscriptions
+- 📝 **Markdown Ready** - Integrates with `@changerawr/markdown` for rich content rendering
+- 🧩 **Modular** - Tree-shakeable, use only what you need
+- 🚀 **Lightweight** - No admin bloat, optimized bundle size
+- 📚 **Well Documented** - Clear examples and TypeScript definitions
 
 ## Installation
 
@@ -83,42 +90,76 @@ function ChangelogContainer() {
 }
 ```
 
-## Available Hooks and Components
+## API Reference
 
 ### Hooks
 
+This SDK provides focused hooks for consuming and displaying changelog data:
+
 ```tsx
-// Projects
-const { data: projects } = useProjects();
-const { data: project } = useProject('project-id');
-const { createProject } = useCreateProject();
-const { updateProject } = useUpdateProject('project-id');
-const { deleteProject } = useDeleteProject('project-id');
+// Changelog entries - fetch and display
+const {
+  data: entries,           // Array of changelog entries
+  isLoading,               // Loading state
+  error,                   // Error object if any
+  fetchNextPage,           // Load more entries (pagination)
+  hasNextPage,             // Whether more entries are available
+  filters,                 // Current filter state
+  setFilters               // Update filters (search, tags, sort)
+} = useChangelog({
+  limit: 10,
+  sort: 'newest',
+  search: 'feature',
+  tags: ['new', 'improved']
+});
 
-// Changelog entries
-const { data: entries } = useChangelog('project-id');
-const { data: entry } = useChangelogEntry('project-id', 'entry-id');
-const { createEntry } = useCreateEntry('project-id');
-const { updateEntry } = useUpdateEntry('project-id', 'entry-id');
-const { deleteEntry } = useDeleteEntry('project-id', 'entry-id');
-const { publishEntry, unpublishEntry } = usePublishEntry('project-id', 'entry-id');
+// Single changelog entry - for detail pages
+const {
+  data: entry,
+  isLoading,
+  error,
+  refetch
+} = useChangelogEntry(projectId, entryId);
 
-// Tags
-const { data: tags } = useTags('project-id');
-const { selectedTags, toggleTag } = useTagFilter();
+// Tags - for filtering
+const {
+  data: tags,
+  isLoading,
+  error
+} = useTags(projectId);
 
-// Subscriptions
-const { subscribe } = useSubscribe('project-id');
-const { data: subscribers } = useSubscribers('project-id');
-const { unsubscribe } = useUnsubscribe();
+// Tag filtering - local state management
+const {
+  selectedTags,            // Array of selected tag IDs
+  toggleTag,               // Toggle a tag selection
+  clearTags,               // Clear all selections
+  isTagSelected            // Check if tag is selected
+} = useTagFilter();
 
-// Email
-const { data: emailConfig } = useEmailConfig('project-id');
-const { updateConfig } = useUpdateEmailConfig('project-id');
-const { sendEmail } = useSendEmail('project-id');
+// Subscriptions - let users subscribe to updates
+const {
+  subscribe,               // Function to subscribe
+  isLoading,
+  error,
+  success
+} = useSubscribe(projectId);
 
-// Widget
-const { script } = useWidgetScript('project-id');
+const {
+  unsubscribe,             // Function to unsubscribe
+  isLoading,
+  error,
+  success
+} = useUnsubscribe();
+
+// Widget - embed changelog widget
+const {
+  script,                  // Widget embed script
+  isLoading
+} = useWidgetScript(projectId, {
+  theme: 'dark',
+  position: 'bottom-right',
+  isPopup: true
+});
 ```
 
 ### Components
@@ -195,6 +236,68 @@ function AppFooter() {
   );
 }
 ```
+
+## Markdown Rendering
+
+Changerawr entries support markdown content. To render markdown in your changelog UI, use the `@changerawr/markdown` package:
+
+```bash
+npm install @changerawr/markdown
+```
+
+### Basic Usage
+
+```tsx
+import { ChangerawrProvider, useChangelog } from '@changerawr/react';
+import { MarkdownRenderer } from '@changerawr/markdown/react';
+
+function ChangelogList() {
+  const { data: entries, isLoading } = useChangelog();
+
+  if (isLoading) return <div>Loading...</div>;
+
+  return (
+    <div className="changelog-list">
+      {entries?.map(entry => (
+        <article key={entry.id} className="changelog-entry">
+          <h2>{entry.title}</h2>
+          <div className="entry-metadata">
+            <time>{new Date(entry.publishedAt).toLocaleDateString()}</time>
+            {entry.tags.map(tag => (
+              <span key={tag.id} className="tag">{tag.name}</span>
+            ))}
+          </div>
+
+          {/* Render markdown content */}
+          <MarkdownRenderer
+            content={entry.content}
+            format="tailwind"
+            className="prose max-w-none"
+          />
+        </article>
+      ))}
+    </div>
+  );
+}
+```
+
+### Advanced Markdown Options
+
+```tsx
+import { MarkdownRenderer } from '@changerawr/markdown/react';
+
+<MarkdownRenderer
+  content={entry.content}
+  format="tailwind"              // or "html" for plain HTML
+  className="prose dark:prose-invert"
+  onRender={(html, tokens) => {
+    // Optional: do something after rendering
+    console.log('Rendered markdown');
+  }}
+/>
+```
+
+See the [@changerawr/markdown documentation](https://github.com/changerawr/markdown) for more details on markdown rendering, custom extensions, styling, and advanced features.
 
 ## Development
 
