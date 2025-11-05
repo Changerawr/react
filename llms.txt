@@ -1,0 +1,466 @@
+# @changerawr/react
+
+> Headless React SDK for Changerawr - modern changelog management system
+
+## Overview
+
+@changerawr/react is a TypeScript-based React SDK that provides headless components and hooks for integrating Changerawr changelog functionality into React applications. It offers complete control over UI implementation while handling all API interactions and state management.
+
+Version: 0.1.0
+License: MIT
+Repository: https://github.com/changerawr/react
+
+## Installation
+
+```bash
+npm install @changerawr/react
+# or
+yarn add @changerawr/react
+# or
+pnpm add @changerawr/react
+```
+
+## Core Concepts
+
+### Provider Setup
+
+All Changerawr functionality requires wrapping your application (or relevant section) with the ChangerawrProvider:
+
+```tsx
+import { ChangerawrProvider } from '@changerawr/react';
+
+<ChangerawrProvider
+  apiUrl="https://your-changerawr-instance.com/api"
+  projectId="your-project-id"
+  apiKey="your-api-key" // Optional: for authenticated operations
+>
+  {/* Your app components */}
+</ChangerawrProvider>
+```
+
+### State Management
+
+The SDK uses Zustand for internal state management and provides React hooks that handle:
+- API requests via axios
+- Loading states
+- Error handling
+- Data caching
+- Pagination
+
+## Available Hooks
+
+### Project Management
+
+**useProjects()**
+- Fetches all projects
+- Returns: { data: Project[], isLoading: boolean, error: Error | null }
+
+**useProject(projectId: string)**
+- Fetches a single project by ID
+- Returns: { data: Project, isLoading: boolean, error: Error | null }
+
+**useCreateProject()**
+- Creates a new project
+- Returns: { createProject: (data) => Promise<Project>, isLoading: boolean, error: Error | null }
+
+**useUpdateProject(projectId: string)**
+- Updates an existing project
+- Returns: { updateProject: (data) => Promise<Project>, isLoading: boolean, error: Error | null }
+
+**useDeleteProject(projectId: string)**
+- Deletes a project
+- Returns: { deleteProject: () => Promise<void>, isLoading: boolean, error: Error | null }
+
+### Changelog Entries
+
+**useChangelog(options?: { limit?: number, sort?: 'newest' | 'oldest' })**
+- Fetches changelog entries with pagination
+- Returns: { data: Entry[], isLoading: boolean, error: Error | null, fetchNextPage: () => void, hasNextPage: boolean }
+
+**useChangelogEntry(projectId: string, entryId: string)**
+- Fetches a single changelog entry
+- Returns: { data: Entry, isLoading: boolean, error: Error | null }
+
+**useCreateEntry(projectId: string)**
+- Creates a new changelog entry
+- Returns: { createEntry: (data) => Promise<Entry>, isLoading: boolean, error: Error | null }
+
+**useUpdateEntry(projectId: string, entryId: string)**
+- Updates an existing changelog entry
+- Returns: { updateEntry: (data) => Promise<Entry>, isLoading: boolean, error: Error | null }
+
+**useDeleteEntry(projectId: string, entryId: string)**
+- Deletes a changelog entry
+- Returns: { deleteEntry: () => Promise<void>, isLoading: boolean, error: Error | null }
+
+**usePublishEntry(projectId: string, entryId: string)**
+- Publishes or unpublishes a changelog entry
+- Returns: { publishEntry: () => Promise<Entry>, unpublishEntry: () => Promise<Entry>, isLoading: boolean, error: Error | null }
+
+### Tag Management
+
+**useTags(projectId: string)**
+- Fetches all tags for a project
+- Returns: { data: Tag[], isLoading: boolean, error: Error | null }
+
+**useTagFilter()**
+- Manages tag filtering state for changelog entries
+- Returns: { selectedTags: string[], toggleTag: (tagId: string) => void, clearTags: () => void }
+
+### Subscriber Management
+
+**useSubscribe(projectId: string)**
+- Subscribes a user to changelog updates
+- Returns: { subscribe: (email: string, name?: string, type?: 'email' | 'rss') => Promise<Subscriber>, isLoading: boolean, error: Error | null }
+
+**useSubscribers(projectId: string)**
+- Fetches all subscribers (requires authentication)
+- Returns: { data: Subscriber[], isLoading: boolean, error: Error | null }
+
+**useUnsubscribe()**
+- Unsubscribes a user from updates
+- Returns: { unsubscribe: (token: string) => Promise<void>, isLoading: boolean, error: Error | null }
+
+### Email Configuration
+
+**useEmailConfig(projectId: string)**
+- Fetches email configuration for a project
+- Returns: { data: EmailConfig, isLoading: boolean, error: Error | null }
+
+**useUpdateEmailConfig(projectId: string)**
+- Updates email configuration
+- Returns: { updateConfig: (config) => Promise<EmailConfig>, isLoading: boolean, error: Error | null }
+
+**useSendEmail(projectId: string)**
+- Sends email notifications to subscribers
+- Returns: { sendEmail: (entryId: string) => Promise<void>, isLoading: boolean, error: Error | null }
+
+### Widget
+
+**useWidgetScript(projectId: string)**
+- Generates embed script for Changerawr widget
+- Returns: { script: string }
+
+## Components
+
+### SubscriptionForm
+
+Pre-built subscription form component with customizable labels and styling:
+
+```tsx
+import { SubscriptionForm } from '@changerawr/react';
+
+<SubscriptionForm
+  className="custom-form"
+  showSubscriptionType={true}
+  emailLabel="Your Email"
+  nameLabel="Your Name"
+  submitButtonText="Subscribe"
+  onSuccess={() => console.log('Subscribed!')}
+  onError={(error) => console.error(error)}
+/>
+```
+
+Props:
+- className?: string - Custom CSS class
+- showSubscriptionType?: boolean - Show subscription type selector (email/RSS)
+- emailLabel?: string - Label for email input
+- nameLabel?: string - Label for name input
+- submitButtonText?: string - Submit button text
+- onSuccess?: () => void - Success callback
+- onError?: (error: Error) => void - Error callback
+
+### ChangerawrWidget
+
+Embeddable widget component for displaying changelog:
+
+```tsx
+import { ChangerawrWidget } from '@changerawr/react';
+
+<ChangerawrWidget
+  projectId="your-project-id"
+  isPopup={true}
+  position="bottom-right"
+  theme="dark"
+  trigger="changelog-trigger-id"
+  maxEntries={5}
+/>
+```
+
+Props:
+- projectId: string - Project ID
+- isPopup?: boolean - Display as popup modal
+- position?: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left' - Popup position
+- theme?: 'light' | 'dark' - Color theme
+- trigger?: string - ID of trigger element
+- maxEntries?: number - Maximum number of entries to display
+
+### ChangerawrWidgetTrigger
+
+Button component to trigger the widget popup:
+
+```tsx
+import { ChangerawrWidgetTrigger } from '@changerawr/react';
+
+<ChangerawrWidgetTrigger
+  id="changelog-trigger"
+  className="custom-button"
+>
+  View Changelog
+</ChangerawrWidgetTrigger>
+```
+
+## Type Definitions
+
+### Project
+```typescript
+interface Project {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+```
+
+### Entry (Changelog Entry)
+```typescript
+interface Entry {
+  id: string;
+  projectId: string;
+  title: string;
+  content: string;
+  published: boolean;
+  publishedAt?: string;
+  tags: Tag[];
+  createdAt: string;
+  updatedAt: string;
+}
+```
+
+### Tag
+```typescript
+interface Tag {
+  id: string;
+  name: string;
+  color: string;
+  projectId: string;
+}
+```
+
+### Subscriber
+```typescript
+interface Subscriber {
+  id: string;
+  email: string;
+  name?: string;
+  type: 'email' | 'rss';
+  subscribedAt: string;
+}
+```
+
+## Common Usage Patterns
+
+### Fetching and Displaying Changelog
+
+```tsx
+import { useChangelog } from '@changerawr/react';
+
+function ChangelogList() {
+  const { data: entries, isLoading, error, fetchNextPage, hasNextPage } = useChangelog({
+    limit: 10,
+    sort: 'newest'
+  });
+
+  if (isLoading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error.message}</div>;
+
+  return (
+    <div>
+      {entries?.map(entry => (
+        <article key={entry.id}>
+          <h2>{entry.title}</h2>
+          <p>{entry.content}</p>
+          <div className="tags">
+            {entry.tags.map(tag => (
+              <span key={tag.id} style={{ color: tag.color }}>
+                {tag.name}
+              </span>
+            ))}
+          </div>
+        </article>
+      ))}
+      {hasNextPage && (
+        <button onClick={() => fetchNextPage()}>Load More</button>
+      )}
+    </div>
+  );
+}
+```
+
+### Creating a New Entry
+
+```tsx
+import { useCreateEntry } from '@changerawr/react';
+
+function CreateEntryForm({ projectId }) {
+  const { createEntry, isLoading, error } = useCreateEntry(projectId);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+
+    try {
+      await createEntry({
+        title: formData.get('title'),
+        content: formData.get('content'),
+        published: false,
+        tags: []
+      });
+      // Success handling
+    } catch (err) {
+      // Error handling
+    }
+  };
+
+  return <form onSubmit={handleSubmit}>...</form>;
+}
+```
+
+### Filtering by Tags
+
+```tsx
+import { useChangelog, useTags, useTagFilter } from '@changerawr/react';
+
+function FilterableChangelog({ projectId }) {
+  const { data: tags } = useTags(projectId);
+  const { selectedTags, toggleTag } = useTagFilter();
+  const { data: entries } = useChangelog();
+
+  const filteredEntries = entries?.filter(entry =>
+    selectedTags.length === 0 ||
+    entry.tags.some(tag => selectedTags.includes(tag.id))
+  );
+
+  return (
+    <div>
+      <div className="tag-filters">
+        {tags?.map(tag => (
+          <button
+            key={tag.id}
+            onClick={() => toggleTag(tag.id)}
+            className={selectedTags.includes(tag.id) ? 'active' : ''}
+          >
+            {tag.name}
+          </button>
+        ))}
+      </div>
+      {/* Render filteredEntries */}
+    </div>
+  );
+}
+```
+
+## Error Handling
+
+All hooks provide error state that includes:
+- HTTP status codes
+- Error messages
+- Request details
+
+```tsx
+const { data, error } = useChangelog();
+
+if (error) {
+  if (error.response?.status === 404) {
+    // Handle not found
+  } else if (error.response?.status === 401) {
+    // Handle unauthorized
+  } else {
+    // Handle general error
+  }
+}
+```
+
+## Authentication
+
+For operations requiring authentication (creating, updating, deleting), provide an apiKey to the ChangerawrProvider:
+
+```tsx
+<ChangerawrProvider
+  apiUrl="https://api.example.com"
+  projectId="project-123"
+  apiKey="your-secret-key"
+>
+```
+
+## Development
+
+### Project Structure
+```
+src/
+├── client/          # API client and error handling
+├── components/      # React components
+├── context/         # React context providers
+├── hooks/           # React hooks organized by feature
+│   ├── changelog/   # Changelog CRUD hooks
+│   ├── email/       # Email configuration hooks
+│   ├── projects/    # Project management hooks
+│   ├── subscribers/ # Subscriber management hooks
+│   ├── tags/        # Tag management hooks
+│   └── widget/      # Widget-related hooks
+└── utils/           # Utility functions
+```
+
+### Building
+```bash
+npm run build      # Build for production
+npm run dev        # Build with watch mode
+```
+
+### Testing
+```bash
+npm test           # Run tests
+npm run test:watch # Run tests in watch mode
+```
+
+### Dependencies
+- react: ^16.8.0 (peer dependency)
+- react-dom: ^16.8.0 (peer dependency)
+- axios: ^1.6.2 (HTTP client)
+- zustand: ^4.4.6 (state management)
+
+## Best Practices
+
+1. **Always wrap with ChangerawrProvider** - All hooks require the provider context
+2. **Handle loading and error states** - All hooks provide isLoading and error for proper UX
+3. **Use TypeScript** - Full type definitions are provided for type safety
+4. **Lazy load components** - Use React.lazy() for widget components if not needed immediately
+5. **Pagination** - Use fetchNextPage for large changelog lists instead of loading all at once
+6. **Caching** - The SDK handles caching internally; avoid duplicate fetches
+
+## Troubleshooting
+
+**Hook not working:**
+- Ensure component is wrapped in ChangerawrProvider
+- Check that apiUrl and projectId are correctly configured
+- Verify API endpoint is accessible
+
+**Authentication errors:**
+- Ensure apiKey is provided for authenticated operations
+- Check that the API key has proper permissions
+
+**Type errors:**
+- Ensure @types/react and @types/react-dom are installed
+- Check TypeScript version compatibility (requires ^5.3.2)
+
+## Links
+
+- Repository: https://github.com/changerawr/react
+- Issues: https://github.com/changerawr/react/issues
+- NPM: https://www.npmjs.com/package/@changerawr/react
+
+## Keywords
+
+react, changelog, headless, sdk, typescript, hooks, changerawr, component-library, api-client
